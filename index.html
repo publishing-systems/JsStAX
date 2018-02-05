@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html version="-//W3C//DTD XHTML 1.1//EN" xmlns="http://www.w3.org/1999/xhtml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.w3.org/1999/xhtml http://www.w3.org/MarkUp/SCHEMA/xhtml11.xsd" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="content-type" content="application/xhtml+xml; charset=UTF-8"/>
+    <!--
+    Copyright (C) 2018 Stephan Kreutzer
+
+    This file is part of JsStAX.
+
+    JsStAX is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License version 3 or any later version,
+    as published by the Free Software Foundation.
+
+    JsStAX is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU Affero General Public License 3 for more details.
+
+    You should have received a copy of the GNU Affero General Public License 3
+    along with JsStAX. If not, see <http://www.gnu.org/licenses/>.
+    -->
+    <title>JsStAX</title>
+    <script type="text/javascript" src="CharacterStream.js"></script>
+    <script type="text/javascript" src="JsStAX.js"></script>
+    <script type="text/javascript">
+      "use strict";
+
+      let input = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                  "<test>\n" +
+                  "  <!-- Comment -->\n" +
+                  "  <?application init?>\n" +
+                  "  <ns:content xml:lang=\"en\" lang=\"en\">\n" +
+                  "    Hello, &amp; world!\n" +
+                  "  </ns:content>\n" +
+                  "</test>\n";
+
+      let stream = new CharacterStream(input);
+      let reader = createXMLEventReader(stream);
+
+      while (reader.hasNext() == true)
+      {
+          let event = reader.nextEvent();
+
+          if (event instanceof StartElement)
+          {
+              let name = event.getName();
+              let tag = "<";
+              let prefix = name.getPrefix();
+
+              if (prefix.length > 0)
+              {
+                  tag += prefix + ":";
+              }
+
+              tag += name.getLocalPart();
+
+              let attributes = event.getAttributes();
+
+              for (let key in attributes)
+              {
+                  let attributeName = attributes[key].getName();
+
+                  tag += " ";
+
+                  let attributePrefix = attributeName.getPrefix();
+
+                  if (attributePrefix.length > 0)
+                  {
+                      tag += attributePrefix;
+                      tag += ":";
+                  }
+
+                  tag += attributeName.getLocalPart();
+                  tag += "=\"";
+
+                  tag += attributes[key].getValue().replace("\"", "&quot;");
+                  tag += "\"";
+              }
+
+              tag += ">";
+
+              console.log(tag);
+          }
+          else if (event instanceof EndElement)
+          {
+              let name = event.getName();
+              let tag = "</";
+              let prefix = name.getPrefix();
+
+              if (prefix.length > 0)
+              {
+                  tag += prefix + ":";
+              }
+
+              tag += name.getLocalPart();
+              tag += ">";
+
+              console.log(tag);
+          }
+          else if (event instanceof Characters)
+          {
+              let characters = event.getData();
+
+              for (let i = 0; i < characters.length; i++)
+              {
+                  switch (characters.charAt(i))
+                  {
+                  case '&':
+                      console.log("&amp;");
+                      break;
+                  case '<':
+                      console.log("&lt;");
+                      break;
+                  case '>':
+                      console.log("&gt;");
+                      break;
+                  default:
+                      console.log(characters.charAt(i));
+                      break;
+                  }
+              }
+          }
+          else if (event instanceof Comment)
+          {
+              console.log("<!--" + event.getText() + "-->");
+          }
+          else if (event instanceof ProcessingInstruction)
+          {
+              console.log("<?" + event.getTarget() + " " + event.getData() + "?>");
+          }
+          else
+          {
+
+          }
+      }
+    </script>
+  </head>
+  <body>
+  </body>
+</html>
