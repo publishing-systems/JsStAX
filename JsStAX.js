@@ -42,7 +42,8 @@ function XMLEventReader(stream)
     /** @todo Load more from a catalogue, which itself is written in XML and needs to be read
       * in here by another local XMLEventReader object, containing mappings from entity to
       * replacement characters. No need to deal with DTDs as they're non-XML, and extracting
-      * those mappings from a DTD can be a separate program or manual procedure. */
+      * those mappings from a DTD can be a separate program or manual procedure. Also see
+      * intermediate workaround method XMLEventReader.addToEntityReplacementDictionary(). */
 
     self.hasNext = function()
     {
@@ -486,7 +487,8 @@ function XMLEventReader(stream)
                     }
                 }
             }
-            else if (/[a-zA-Z]/.test(byte) == true ||
+            /** @todo The check was isalnum(), so it should support Unicode. */
+            else if (/[a-zA-Z0-9]/.test(byte) == true ||
                      byte == '-' ||
                      byte == '_' ||
                      byte == '.')
@@ -495,7 +497,7 @@ function XMLEventReader(stream)
             }
             else
             {
-                throw "Character '" << byte << "' not supported in a start tag name.";
+                throw "Character '" + byte + "' not supported in a start tag name.";
             }
 
             byte = _stream.get();
@@ -599,7 +601,7 @@ function XMLEventReader(stream)
                 {
                     for (let i = 0; i < matchCount; i++)
                     {
-                        data += endSeqence[i];
+                        data += endSequence[i];
                     }
 
                     data += byte;
@@ -767,7 +769,7 @@ function XMLEventReader(stream)
             {
                 return new QName("", nameLocalPart, namePrefix);
             }
-            else if (/[a-zA-Z]/.test(byte) == true ||
+            else if (/[a-zA-Z0-9]/.test(byte) == true ||
                      byte == '-' ||
                      byte == '_' ||
                      byte == '.')
@@ -776,7 +778,7 @@ function XMLEventReader(stream)
             }
             else
             {
-                throw "Character '" << byte << "' not supported in an attribute name.";
+                throw "Character '" + byte + "' not supported in an attribute name.";
             }
 
         } while (true);
@@ -861,6 +863,20 @@ function XMLEventReader(stream)
             }
 
         } while (true);
+    }
+
+    self.addToEntityReplacementDictionary = function(name, replacementText)
+    {
+        if (name == "amp" ||
+            name == "lt" ||
+            name == "gt" ||
+            name == "apos" ||
+            name == "quot")
+        {
+            throw "Redefinition of built-in entity.";
+        }
+
+        _entityReplacementDictionary[name] = replacementText;
     }
 
     function ResolveEntity()
@@ -964,8 +980,7 @@ function XMLEventReader(stream)
                 complete = true;
                 break;
             }
-            /** @todo The check was isalnum(), so it should not only Unicode, but also numbers. */
-            else if (/[a-zA-Z]/.test(byte) == true ||
+            else if (/[a-zA-Z0-9]/.test(byte) == true ||
                      byte == '-' ||
                      byte == '_' ||
                      byte == '.')
