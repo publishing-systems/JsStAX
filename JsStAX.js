@@ -715,7 +715,7 @@ function XMLEventReader(stream)
         }
         else
         {
-            throw "Character '" + byte + "' not supported as first character of an attribute name.";
+            throw "Character '" + firstByte + "' not supported as first character of an attribute name.";
         }
 
         let byte;
